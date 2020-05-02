@@ -7,6 +7,18 @@ class Processor {
 
   // TODO: Declare any necessary private members
  private:
+ enum CPUStates {
+  kUser_ = 0,
+  kNice_, // automaticlly increment to 1
+  kSystem_,
+  kIdle_,
+  kIOwait_,
+  kIRQ_,
+  kSoftIRQ_,
+  kSteal_,
+  kGuest_,
+  kGuestNice_ // automaticlly increment to 9
+};
 };
 
 #endif

@@ -3,6 +3,8 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <iostream>
+
 #include "linux_parser.h"
 
 #include "process.h"
@@ -12,10 +14,14 @@ using std::to_string;
 using std::vector;
 
 // constructor
-Process::Process(int pid) : pid_(pid) {}
+// Process::Process(int pid) : pid_{pid} {}
+Process::Process(int p) : pid_(p) {}
+// Process::Process(int pid){
+//   Process::pid_ = pid;
+// }
 
 // Return this process's ID
-int Process::Pid() { return pid_; }
+int Process::Pid() { return Process::pid_; }
 
 // TODO: Return this process's CPU utilization
 
@@ -46,8 +52,9 @@ float Process::CpuUtilization() {
   
   // / sysconf(_SC_CLK_TCK)
 //   this->cpu_util_ = total_time / (up_time - start_time);
+  long seconds = up_time - (start_time / sysconf(_SC_CLK_TCK));
   
-  return total_time / (up_time - start_time);
+  return (total_time / sysconf(_SC_CLK_TCK)) / seconds;
 
 }
 
@@ -67,5 +74,6 @@ long int Process::UpTime() { return LinuxParser::UpTime(pid_); }
 // REMOVE: [[maybe_unused]] once you define the function
 bool Process::operator<(Process const& a) const { 
   // this < a means the Ram used by this object is less than 
-  return this->CpuUtilization() < a->CpuUtilization();
+  // return this.CpuUtilization() < a.CpuUtilization();//
+  return stol(LinuxParser::Ram(pid_)) > stol(LinuxParser::Ram(a.pid_));
 }
