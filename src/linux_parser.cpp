@@ -130,8 +130,9 @@ long LinuxParser::Jiffies() {
 long LinuxParser::ActiveJiffies(int pid) { 
   string val;
   vector<string> vec;
-  int utime, stime, cutime, cstime, starttime;
-  std::ifstream filestream(kProcDirectory + to_string(pid) + kUptimeFilename);
+  long utime, stime, cutime, cstime, starttime;
+  long sum = 0;
+  std::ifstream filestream(kProcDirectory + std::to_string(pid) + kUptimeFilename);
     if(filestream.is_open()){
       std::getline(filestream, line);
       std::istringstream linestream(line);
@@ -139,11 +140,13 @@ long LinuxParser::ActiveJiffies(int pid) {
         vec.push_back(val);
       }
     }
-  utime = stoi(vec[13]);
-  stime = stoi(vec[14]);
-  cutime = stoi(vec[15]);
-  cstime = stoi(vec[16]);
-  starttime = stoi(vec[21]);
+  utime = stol(vec[13]);
+  stime = stol(vec[14]);
+  cutime = stol(vec[15]);
+  cstime = stol(vec[16]);
+  starttime = stol(vec[21]);
+  
+  return utime+stime+cutime+cstime+starttime;
 }
 
 long LinuxParser::ActiveJiffies() { 
@@ -201,9 +204,17 @@ int LinuxParser::RunningProcesses() {
   return 0;
 }
 
-// TODO: Read and return the command associated with a process
-// REMOVE: [[maybe_unused]] once you define the function
-string LinuxParser::Command(int pid[[maybe_unused]]) { return string(); }
+string LinuxParser::Command(int pid) {
+  string line;
+  std::ifstream filestream(kProcDirectory + std::to_string(pid) + kCmdlineFilename);
+  if(filestream.is_open()){
+    std::getline(filestream, line);
+    // no need to use istringstream
+    // std::istringstream linestream(line);
+  }
+  return line;
+
+}
 
 // TODO: Read and return the memory used by a process
 // REMOVE: [[maybe_unused]] once you define the function
