@@ -110,7 +110,41 @@ long LinuxParser::Jiffies() {
 
 // TODO: Read and return the number of active jiffies for a PID
 // REMOVE: [[maybe_unused]] once you define the function
-long LinuxParser::ActiveJiffies(int pid[[maybe_unused]]) { return 0; }
+// https://stackoverflow.com/questions/16726779/how-do-i-get-the-total-cpu-usage-of-an-application-from-proc-pid-stat/16736599#16736599
+// #14 utime - CPU time spent in user code, measured in clock ticks
+// #15 stime - CPU time spent in kernel code, measured in clock ticks
+// #16 cutime - Waited-for children's CPU time spent in user code (in clock ticks)
+// #17 cstime - Waited-for children's CPU time spent in kernel code (in clock ticks)
+// #22 starttime - Time when the process started, measured in clock ticks
+// First we determine the total time spent for the process:
+// total_time = utime + stime
+// We also have to decide whether we want to include the time from children processes. If we do, then we add those values to total_time:
+
+// total_time = total_time + cutime + cstime
+// Next we get the total elapsed time in seconds since the process started:
+
+// seconds = uptime - (starttime / Hertz)
+// Finally we calculate the CPU usage percentage:
+
+// cpu_usage = 100 * ((total_time / Hertz) / seconds)
+long LinuxParser::ActiveJiffies(int pid) { 
+  string val;
+  vector<string> vec;
+  int utime, stime, cutime, cstime, starttime;
+  std::ifstream filestream(kProcDirectory + to_string(pid) + kUptimeFilename);
+    if(filestream.is_open()){
+      std::getline(filestream, line);
+      std::istringstream linestream(line);
+      while(linestream >> val){
+        vec.push_back(val);
+      }
+    }
+  utime = stoi(vec[13]);
+  stime = stoi(vec[14]);
+  cutime = stoi(vec[15]);
+  cstime = stoi(vec[16]);
+  starttime = stoi(vec[21]);
+}
 
 long LinuxParser::ActiveJiffies() { 
   return LinuxParser::Jiffies() - LinuxParser::IdleJiffies();
