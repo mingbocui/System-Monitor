@@ -4,18 +4,39 @@
 #include <unistd.h>
 
 using std::string;
-// TODO: Return the aggregate CPU utilization
+using std::stoi;
+// Return the aggregate CPU utilization
 float Processor::Utilization() { 
-  long total_jiffies_1 = LinuxParser::Jiffies();
-  long active_jiffies_1 = LinuxParser::ActiveJiffies();
-  usleep(10000);
-  long total_jiffies_2 = LinuxParser::Jiffies();
-  long active_jiffies_2 = LinuxParser::ActiveJiffies();
+  // long total_jiffies_1 = LinuxParser::Jiffies();
+  // long active_jiffies_1 = LinuxParser::ActiveJiffies();
+  // usleep(10000);
+  // long total_jiffies_2 = LinuxParser::Jiffies();
+  // long active_jiffies_2 = LinuxParser::ActiveJiffies();
 
-  long delta_total = total_jiffies_2 - total_jiffies_1;
-  long delta_active = active_jiffies_2 - active_jiffies_1;
+  // long delta_total = total_jiffies_2 - total_jiffies_1;
+  // long delta_active = active_jiffies_2 - active_jiffies_1;
 
-  return float (delta_active / delta_total);
+  // return float (delta_active / delta_total);
+
+  string cpu, user, nice, sys, idle, iowait, irq, soft_irq, steal, guest, guest_nice;
+  string line;
+
+  std::ifstream filestream(LinuxParser::kProcDirectory + LinuxParser::kStatFilename);
+
+  if (filestream.is_open())
+  {
+    std::getline(filestream, line);
+    std::istringstream linestream(line);
+    linestream >> cpu >> user >> nice >> sys >> idle >> iowait >> irq >> soft_irq >> steal >> guest >> guest_nice;
+
+    int idle_time = stoi(idle) + stoi(iowait);
+    int no_idle_time = stoi(user) + stoi(nice) + stoi(sys) + stoi(irq) + stoi(soft_irq) + stoi(steal);
+
+    float total_time = idle_time + no_idle_time;
+
+    return (total_time - idle_time)/total_time;
+  }
+  return 0;
 
 }
 

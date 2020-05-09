@@ -45,7 +45,7 @@ int Process::Pid() { return Process::pid_; }
 // cpu_usage = 100 * ((total_time / Hertz) / seconds)
 
 
-float Process::CpuUtilization() { 
+float Process::CpuUtilization(){ 
   long total_time = LinuxParser::ActiveJiffies(pid_);
   long start_time = LinuxParser::UpTime(pid_);
   long up_time = LinuxParser::UpTime(); // seconds?
@@ -54,7 +54,9 @@ float Process::CpuUtilization() {
 //   this->cpu_util_ = total_time / (up_time - start_time);
   long seconds = up_time - (start_time / sysconf(_SC_CLK_TCK));
   
-  return (total_time / sysconf(_SC_CLK_TCK)) / seconds;
+  // return (total_time / sysconf(_SC_CLK_TCK)) / seconds;
+  cpu_util_ =  (total_time / sysconf(_SC_CLK_TCK)) / seconds;
+  return cpu_util_;
 
 }
 
@@ -70,10 +72,9 @@ string Process::User() { return LinuxParser::User(pid_); }
 // Return the age of this process (in seconds)
 long int Process::UpTime() { return LinuxParser::UpTime(pid_); }
 
-// TODO Overload the "less than" comparison operator for Process objects
-// REMOVE: [[maybe_unused]] once you define the function
-bool Process::operator<(Process const& a) const { 
+//  Overload the "less than" comparison operator for Process objects
+bool Process::operator<(Process const& a) const{ 
   // this < a means the Ram used by this object is less than 
-  // return this.CpuUtilization() < a.CpuUtilization();//
-  return stol(LinuxParser::Ram(pid_)) > stol(LinuxParser::Ram(a.pid_));
+  return cpu_util_ < a.cpu_util_;//
+  // return stol(LinuxParser::Ram(pid_)) > stol(LinuxParser::Ram(a.pid_));
 }
