@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <utility>
 
 #include "linux_parser.h"
 
@@ -16,46 +17,27 @@ using std::vector;
 // constructor
 // Process::Process(int pid) : pid_{pid} {}
 Process::Process(int p) : pid_(p) {}
-// Process::Process(int pid){
-//   Process::pid_ = pid;
-// }
 
 // Return this process's ID
 int Process::Pid() { return Process::pid_; }
 
-// TODO: Return this process's CPU utilization
-
-// Read and return the number of active jiffies for a PID
-// https://stackoverflow.com/questions/16726779/how-do-i-get-the-total-cpu-usage-of-an-application-from-proc-pid-stat/16736599#16736599
-// #14 utime - CPU time spent in user code, measured in clock ticks
-// #15 stime - CPU time spent in kernel code, measured in clock ticks
-// #16 cutime - Waited-for children's CPU time spent in user code (in clock ticks)
-// #17 cstime - Waited-for children's CPU time spent in kernel code (in clock ticks)
-// #22 starttime - Time when the process started, measured in clock ticks
-// First we determine the total time spent for the process:
-// total_time = utime + stime
-// We also have to decide whether we want to include the time from children processes. If we do, then we add those values to total_time:
-
-// total_time = total_time + cutime + cstime
-// Next we get the total elapsed time in seconds since the process started:
-
-// seconds = uptime - (starttime / Hertz)
-// Finally we calculate the CPU usage percentage:
-
-// cpu_usage = 100 * ((total_time / Hertz) / seconds)
-
-
 float Process::CpuUtilization(){ 
-  long total_time = LinuxParser::ActiveJiffies(pid_);
-  long start_time = LinuxParser::UpTime(pid_);
-  long up_time = LinuxParser::UpTime(); // seconds?
-  
-  // / sysconf(_SC_CLK_TCK)
-//   this->cpu_util_ = total_time / (up_time - start_time);
-  long seconds = up_time - (start_time / sysconf(_SC_CLK_TCK));
-  
-  // return (total_time / sysconf(_SC_CLK_TCK)) / seconds;
-  cpu_util_ =  (total_time / sysconf(_SC_CLK_TCK)) / seconds;
+  std::ifstream filestream(LinuxParser::kProcDirectory + std::to_string(pid_) + LinuxParser::kStatFilename);
+  string line;
+  std::getline(filestream, line); // file contains only one line
+  std::istringstream buffer(line);
+  std::istream_iterator<string> beginning(buffer), end;
+  std::vector<string> line_content(beginning, end);
+  float utime = LinuxParser::UpTime(pid_);
+  float stime = stof(line_content[14]);
+  float cutime = stof(line_content[15]);
+  float cstime = stof(line_content[16]);
+  float starttime = stof(line_content[21]);
+  float uptime = LinuxParser::UpTime();
+  float freq = sysconf(_SC_CLK_TCK);
+  float total_time = utime + stime + cutime + cstime;
+  float seconds = uptime - (starttime / freq);
+  cpu_util_ = 100.0 * ((total_time / freq) / seconds);
   return cpu_util_;
 
 }
